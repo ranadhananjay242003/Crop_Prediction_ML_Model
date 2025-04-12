@@ -4,6 +4,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
+import os
 from flask import Flask, render_template, request, url_for
 
 app = Flask(__name__, static_folder='static')
@@ -120,4 +121,5 @@ def predict():
 
 if __name__ == "__main__":
     train_crop_model()  # Train the model (only needed once)
-    app.run(debug=True)   
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port) 
