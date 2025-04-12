@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
 from flask import Flask, render_template, request, url_for
+import os
 
 app = Flask(__name__, static_folder='static')
 
