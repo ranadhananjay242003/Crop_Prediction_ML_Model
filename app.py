@@ -1,67 +1,96 @@
-
 import numpy as np
 import pandas as pd
-from flask import Flask, render_template, request
-from xgboost import XGBClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
-import os
+from flask import Flask, render_template, request, url_for
 
 app = Flask(__name__, static_folder='static')
 
-MODEL_PATH = 'crop_prediction_compressed.joblib'
-
 def train_crop_model():
     """
-    Train the crop prediction model using XGBoost.
+    Train a simple crop prediction model using mock data.
+    Save the model for reuse.
     """
     try:
+        # Load dataset
         df = pd.read_csv('cr2.csv')
-        print("✅ Dataset loaded.")
+        print("Dataset loaded successfully.")
 
-        # Ensure all necessary features are present
-        expected_columns = ['N', 'P', 'K', 'temperature', 'humidity', 'pH', 'rainfall', 'label']
-        for col in expected_columns:
-            if col not in df.columns:
-                raise ValueError(f"Missing column: {col}")
+        # Check for missing 'pH' column and handle it
+        if 'pH' not in df.columns:
+            df['pH'] = 0  # or another default value
+            print("'pH' column was missing and has been added with default values.")
 
+        # Features and target
         X = df[['N', 'P', 'K', 'temperature', 'humidity', 'pH', 'rainfall']]
         y = df['label']
 
+        print("Features and target separated.")
+
+        # Train-test split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        print("Training and test data split completed.")
 
-        model = XGBClassifier(use_label_encoder=False, eval_metric='mlogloss')
+        # Model training
+        model = RandomForestClassifier()
+        print("Training the RandomForestClassifier...")
         model.fit(X_train, y_train)
-        print('✅ Model training completed.')
 
+        # Test accuracy
         predictions = model.predict(X_test)
         accuracy = accuracy_score(y_test, predictions)
-        print(f'🎯 Final Accuracy: {accuracy * 100:.2f}%')
+        print(f"Model Accuracy: {accuracy * 100:.2f}%")
 
-        joblib.dump(model, MODEL_PATH)
-        print(f"💾 Model saved to {MODEL_PATH}")
+        # Save the model
+        joblib.dump(model, 'crop_prediction_model.joblib')
+        print("Model saved to 'crop_prediction_model.joblib'.")
+    
+    except FileNotFoundError:
+        print("Error: 'cr2.csv' file not found.")
+    except KeyError as e:
+        print(f"KeyError: {e}")
     except Exception as e:
-        print(f"❌ Error during training: {e}")
+        print(f"An unexpected error occurred: {e}")
 
 def predict_crop(user_input):
     """
-    Predict suitable crop based on user input.
+    Predict the suitable crop based on user input.
     """
     try:
-        if not os.path.exists(MODEL_PATH):
-            raise FileNotFoundError("Model not trained yet.")
+        print("Loading the trained model...")
+        # Load the trained model
+        model = joblib.load('crop_prediction_model.joblib')
+        print("Model loaded successfully.")
 
-        model = joblib.load(MODEL_PATH)
+        print("Preparing features for prediction...")
+        # Extract features for prediction
+        features = np.array([[
+            user_input['N'],
+            user_input['P'],
+            user_input['K'],
+            user_input['temperature'],
+            user_input['humidity'],
+            user_input['pH'],
+            user_input['rainfall']
+        ]])
+        print(f"Features: {features}")
 
-        features = np.array([[user_input['N'], user_input['P'], user_input['K'],
-                              user_input['temperature'], user_input['humidity'],
-                              user_input['pH'], user_input['rainfall']]])
-        prediction = model.predict(features)
-        return prediction[0]
+        # Make prediction
+        predicted_crop = model.predict(features)
+        print(f"Prediction successful. Predicted crop: {predicted_crop[0]}")
+        return predicted_crop[0]
+
+    except FileNotFoundError:
+        print("Error: Model file 'crop_prediction_model.joblib' not found.")
+        return "Error: Model file not found."
+    except KeyError as e:
+        print(f"KeyError during prediction: {e}")
+        return f"Error in prediction: {e}"
     except Exception as e:
-        print(f"❌ Prediction error: {e}")
-        return f"Error: {e}"
+        print(f"An unexpected error occurred during prediction: {e}")
+        return f"Error in prediction: {e}"
 
 @app.route('/')
 def home():
@@ -79,9 +108,14 @@ def predict():
             'pH': float(request.form['pH']),
             'rainfall': float(request.form['rainfall'])
         }
-        prediction = predict_crop(user_input)
-        return render_template('result2.html', prediction=prediction)
+        print(f"Received input: {user_input}")
+        result = predict_crop(user_input)
+        return render_template('result2.html', prediction=result)
+    except ValueError as e:
+        print(f"ValueError processing request: {e}")
+        return render_template('result2.html', prediction=f"Error: {e}")
     except Exception as e:
+        print(f"An unexpected error occurred: {e}")
         return render_template('result2.html', prediction=f"Error: {e}")
 
 if __name__ == "__main__":
