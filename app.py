@@ -10,7 +10,7 @@ import os
 
 app = Flask(__name__, static_folder='static')
 
-MODEL_PATH = 'crop_prediction_model.joblib'
+MODEL_PATH = 'crop_prediction_compressed.joblib'
 
 def train_crop_model():
     """
