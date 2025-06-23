@@ -26,9 +26,4 @@ This project presents a machine learning-powered crop prediction model tailored 
 - **APIs**: FAST API  
 - **Recommendation System**: Collaborative Filtering (User Behavior Analysis)
 
-## 🚀 Getting Started
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-username/crop-prediction-system.git
-   cd crop-prediction-system
+## 🚀 Deployed Link On Render : https://crop-prediction-ml-model.onrender.com
