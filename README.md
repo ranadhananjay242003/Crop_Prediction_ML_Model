@@ -26,4 +26,6 @@ This project presents a machine learning-powered crop prediction model tailored 
 - **APIs**: FAST API  
 - **Recommendation System**: Collaborative Filtering (User Behavior Analysis)
 
-## 🚀 Deployed Link On Render : https://crop-prediction-ml-model.onrender.com
+## 🚀 Deployed Link On Render 
+
+- **Link**: https://crop-prediction-ml-model.onrender.com
